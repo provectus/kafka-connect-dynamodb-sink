@@ -1,0 +1,55 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'java-library'
+}
+
+version '0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url = 'https://packages.confluent.io/maven/' }
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+dependencies {
+    implementation platform("com.amazonaws:aws-java-sdk-bom:$awssdk_version")
+    implementation platform('org.jetbrains.kotlin:kotlin-bom')
+    api project(':kafka-connect-dynamodb-sink-api')
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Name': project.name,
+                'Specification-Version': kafka_connect_version,
+                'Implementation-Title': 'Kafka Connect - DynamoDB Sink Implementation',
+                'Implementation-Version': project.version,
+                'Implementation-Vendor': 'Provectus'
+        )
+    }
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.default
+    into 'build/libs'
+}
+
+task createZipArtifact(type: Zip) {
+    from 'build/libs/'
+    include '*'
+    archiveName "${project.name}-${project.version}.zip"
+    destinationDir(file('/build'))
+    dependsOn 'copyDependencies'
+}
+
+build.finalizedBy 'createZipArtifact'
